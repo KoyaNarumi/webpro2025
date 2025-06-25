@@ -1,38 +1,47 @@
+import express from 'express';
 // 生成した Prisma Client をインポート
-import { PrismaClient } from "./generated/prisma/client";
+import { PrismaClient } from './generated/prisma/client';
+
 const prisma = new PrismaClient({
-  // 実行されたクエリをログに表示する設定じゃ
+  // クエリが実行されたときに実際に実行したクエリをログに表示する設定
   log: ['query'],
 });
+const app = express();
 
-async function main() {
-  console.log("Prisma Client を初期化しました。");
+// 環境変数が設定されていれば、そこからポート番号を取得する。なければ 8888 を使用する。
+const PORT = process.env.PORT || 8888;
 
-  // まず、現在のユーザーをすべて取得して表示する
-  const usersBefore = await prisma.user.findMany();
-  console.log("Before ユーザー一覧:", usersBefore);
+// EJS をテンプレートエンジンとして設定する
+app.set('view engine', 'ejs');
+// EJS のテンプレートファイルが置かれているディレクトリを指定する
+app.set('views', './views');
 
-  // 新しいユーザーを追加する
-  const newUser = await prisma.user.create({
-    data: {
-      name: `新しいユーザー ${new Date().toISOString()}`,
-    },
-  });
-  console.log("新しいユーザーを追加しました:", newUser);
+// フォームから送信されたデータを受け取れるように設定する
+app.use(express.urlencoded({ extended: true }));
 
-  // 追加後にもう一度ユーザーをすべて取得して表示する
-  const usersAfter = await prisma.user.findMany();
-  console.log("After ユーザー一覧:", usersAfter);
-}
+// ルートパス ("/") にGETリクエストが来たときの処理
+app.get('/', async (req, res) => {
+  // データベースからすべてのユーザーを取得する
+  const users = await prisma.user.findMany();
+  // 'index.ejs' ファイルをレンダリング（描画）し、usersデータを渡してHTMLを生成、応答する
+  res.render('index', { users });
+});
 
-// main 関数を実行する。途中でエラーが起きたらそれを表示して終了する
-main()
-  .catch(e => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    // 最後に必ずデータベースとの接続を切断する
-    await prisma.$disconnect();
-    console.log("Prisma Client を切断しました。");
-  });
+// "/users" にPOSTリクエストが来たときの処理（主にフォームの送信で使われる）
+app.post('/users', async (req, res) => {
+  const name = req.body.name; // フォームから送信された'name'の値を取得
+  if (name) {
+    // 新しいユーザーをデータベースに作成する
+    await prisma.user.create({
+      data: { name },
+    });
+    console.log('新しいユーザーを追加しました:', { name });
+  }
+  // ユーザー追加後、ルートパスにリダイレクト（再アクセスさせる）
+  res.redirect('/');
+});
+
+// サーバーを指定したポートで起動する
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
