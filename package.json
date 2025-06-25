@@ -4,7 +4,8 @@
   "description": "Webpro 2025",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "tsx index.ts",
+    "db:dev": "prisma dev"
   },
   "repository": {
     "type": "git",
@@ -16,5 +17,14 @@
   "bugs": {
     "url": "https://github.com/KoyaNarumi/webpro2025/issues"
   },
-  "homepage": "https://github.com/KoyaNarumi/webpro2025#readme"
+  "homepage": "https://github.com/KoyaNarumi/webpro2025#readme",
+  "devDependencies": {
+    "@types/node": "^24.0.4",
+    "prisma": "^6.10.1",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.10.1",
+    "tsx": "^4.20.3"
+  }
 }
